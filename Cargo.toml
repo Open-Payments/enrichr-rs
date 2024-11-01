@@ -1,0 +1,28 @@
+[package]
+name = "enrichr"
+version = "0.1.0"
+edition = "2021"
+description = "A derive macro to enrich Rust structs using declarative transformation specs"
+license = "Apache-2.0"
+repository = "https://github.com/Open-Payments/enrichr-rs"
+documentation = "https://docs.rs/enrichr"
+readme = "README.md"
+keywords = ["derive", "macro", "transformation", "enrichment", "struct"]
+categories = ["development-tools", "rust-patterns"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+jsonpath_lib = "0.3"
+
+[dev-dependencies]
+trybuild = "1.0"
+pretty_assertions = "1.0"
+serde = { version = "1.0", features = ["derive"] }
