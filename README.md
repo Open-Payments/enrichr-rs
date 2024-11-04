@@ -1,62 +1,113 @@
-# enrichr-rs 📦
+# struct-enrichment
 
-A derive macro to enrich Rust structs using declarative transformation specs.
+A Rust library for enriching structs using JSONPath-based mapping rules with support for complex transformations and conditional logic.
 
-## Overview
-
-`enrichr-rs` provides a simple yet powerful way to enrich Rust structs using JSON path mapping specifications. It enables declarative transformation of data from one structure to another through a derive macro, making it ideal for data enrichment, ETL processes, and API response handling.
-
-## Key Features
+## Features
 
 - ✨ Derive macro for automatic implementation
-- 🗺️ JSON path-based field mapping
-- 🎯 Type-safe transformations
-- ⚡ Zero-copy when possible
-- 🛡️ Comprehensive error handling
-- 📝 Clear validation messages
+- 🗺️ JSONPath-based field mapping
+- 🔄 Rich set of transformations
+- 🎯 Multiple source and target paths
+- 🔍 Conditional mapping using JSONLogic
+- 🎨 Template-based formatting
 
-## Quick Start
+## Installation
 
 Add to your `Cargo.toml`:
 ```toml
 [dependencies]
-enrichr = "0.1.0"
+struct_enrichment = "0.1.0"
 ```
 
-Basic usage:
-```rust
-use enrichr::Enrichable;
-use serde::Deserialize;
+## Quick Start
 
-#[derive(Enrichable, Default, Deserialize)]
+```rust
+use struct_enrichment::{Enrichable, MappingRule, JsonPath, Transform};
+use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
+
+#[derive(Debug, Serialize, Deserialize, Enrichable)]
 struct User {
-    name: String,
-    age: u32,
+    first_name: String,
+    last_name: String,
+    email: Option<String>,
+    tags: Vec<String>,
 }
 
-fn main() -> Result<(), Error> {
-    let data = HashMap::from([
-        ("user_data", json!({
-            "full_name": "John Doe",
-            "details": { "age": 30 }
-        }))
-    ]);
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut user = User {
+        first_name: String::new(),
+        last_name: String::new(),
+        email: None,
+        tags: vec![],
+    };
 
-    let spec = r#"{
-        "name": "$.user_data.full_name",
-        "age": "$.user_data.details.age"
+    // Input data in JSON format for readability
+    let data_json = r#"{
+        "user_data": {
+            "full_name": "John Doe",
+            "email": "john@example.com",
+            "tags": "admin,user"
+        }
     }"#;
 
-    let mut user = User::default();
-    user.enrich(&data, spec)?;
-    
-    assert_eq!(user.name, "John Doe");
-    assert_eq!(user.age, 30);
+    // Convert JSON to HashMap
+    let data: HashMap<String, serde_json::Value> = serde_json::from_str(data_json)?;
+
+    // Mapping specification in JSON format
+    let spec_json = r#"[
+        {
+            "source": "$.user_data.full_name",
+            "target": ["$.first_name", "$.last_name"],
+            "transform": {
+                "type": "Split",
+                "params": {
+                    "delimiter": " "
+                }
+            }
+        },
+        {
+            "source": "$.user_data.email",
+            "target": "$.email"
+        },
+        {
+            "source": "$.user_data.tags",
+            "target": "$.tags",
+            "transform": {
+                "type": "Split",
+                "params": {
+                    "delimiter": ","
+                }
+            }
+        }
+    ]"#;
+
+    // Convert JSON spec to Vec<MappingRule>
+    let spec: Vec<MappingRule> = serde_json::from_str(spec_json)?;
+
+    // Perform enrichment
+    user.enrich(&data, &spec)?;
+
+    assert_eq!(user.first_name, "John");
+    assert_eq!(user.last_name, "Doe");
+    assert_eq!(user.email, Some("john@example.com".to_string()));
+    assert_eq!(user.tags, vec!["admin", "user"]);
+
     Ok(())
 }
 ```
 
-## Documentation
+## Available Transformations
 
-- [Usage Guide](./usage.md) - Detailed examples and use cases
-- [Error Handling](./errorhandling.md) - Comprehensive error handling guide
+- `ToString`: Convert any value to string
+- `ToUpperCase`: Convert string to uppercase
+- `ToLowerCase`: Convert string to lowercase
+- `Split`: Split string into array using delimiter
+- `Concat`: Join array values with delimiter
+- `Replace`: Replace substrings
+- `Substring`: Extract substring
+- `Template`: Format string using placeholders
+
+## Documentation
+- [Usage Guide](./docs/usage.md) - Detailed examples and patterns
+- [Error Handling](./docs/error_handling.md) - Error handling guide
