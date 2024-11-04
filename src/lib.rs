@@ -1,13 +1,11 @@
-use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+mod error;
+mod types;
+mod transform;
+mod traits;
+mod jsonpath;
 
-#[proc_macro_derive(Enrichable)]
-pub fn enrichable_derive(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    // TODO: Implement the actual macro
-    TokenStream::new()
-}
-
-pub mod error;
-pub mod enrichable;
+pub use error::EnrichmentError;
+pub use types::{MappingRule, JsonPath, Target, Transform, TransformType};
+pub use traits::{Enrichable, Validatable, ValueSerializer, PathExtractor};
+pub use jsonpath::JsonPathExtractor;
+pub use enrichr_derive::Enrichable;
